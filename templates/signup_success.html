@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Вход</title>
+  <title>Enter</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://getbootstrap.com/docs/4.3/examples/sign-in/signin.css">
   <link rel="stylesheet" href="https://getbootstrap.com/docs/5.0/examples/blog/blog.css">
@@ -20,14 +20,14 @@
     <h1 class="h3 mb-3 font-weight-normal">Sign up</h1>
     <p>
       {{ if eq .Email "ERROR_USER_ALREADY_EXISTS" }}
-      Данный пользователь уже зарегистрирован. Войдите или создайте новую учетную запись.
+      User already exists.
       {{ else }}
-      Пользователь {{ .Email }} зарегистрирован.
+      User {{ .Email }} exists.
       {{ end }}
     </p>
     <label for="inputEmail" class="sr-only">Email address</label>
 
-<button class="btn btn-lg btn-primary btn-block" type="submit">Окей</button>
+<button class="btn btn-lg btn-primary btn-block" type="submit">Ok</button>
 <p class="mt-5 mb-3 text-muted">© 2024 </p>
 </form>
 </body>
