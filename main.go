@@ -10,15 +10,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-const (
-	user   = "mysql"
-	pass   = "mysql"
-	host   = "localhost"
-	port   = "3306"
-	dbname = "golangdb"
-)
+// MYSQL CREDS
+var dbUser string = "root"
+var dbPass string = "admin"
+var dbHost string = "localhost"
+var dbPort string = "3306"
+var dbname string = "golangdb"
 
-var db *sql.DB
+//var db *sql.DB
 
 type TUser struct {
 	Password string
@@ -26,13 +25,18 @@ type TUser struct {
 }
 
 func main() {
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, pass, host, port, dbname))
+
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbname))
 	if err != nil {
-		db.Close()
-		panic(err)
+		panic(err.Error())
 	}
 
-	fmt.Println("Connected to MySql")
+	stmt, err := db.Exec("CREATE TABLE IF NOT EXISTS tbl_user (id INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(50), password VARCHAR(50))")
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println(stmt)
+
 	handleRequest()
 }
 
@@ -56,7 +60,7 @@ func index(w_page http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w_page, "index", nil)
 }
 
-func (this TUser) newUser() {
+func (this TUser) newUser(db *sql.DB) {
 
 	insert, err := db.Query(fmt.Sprintf("INSERT INTO tbl_user (email, password) VALUES ('%s', '%s')", this.Email, this.Password))
 	if err != nil {
@@ -70,13 +74,12 @@ func newUser_page(w_page http.ResponseWriter, r *http.Request) {
 	_user.Email = r.FormValue("inputEmail")
 	_user.Password = r.FormValue("inputPassword")
 
-	// _, err := db.Exec("CREATE TABLE IF NOT EXISTS tbl_user (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, email TEXT NOT NULL, password TEXT NOT NULL)")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	//	var query = fmt.Sprintf(, _user.Email)
-	check_user_in_tbl, err := db.Query("SELECT * FROM tbl_user WHERE email = $1", _user.Email)
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbname))
+	if err != nil {
+		panic(err.Error())
+	}
+	var query = fmt.Sprintf("SELECT * FROM tbl_user WHERE email = '" + _user.Email + "'")
+	check_user_in_tbl, err := db.Query(query)
 	if err != nil {
 		panic(err)
 	}
@@ -87,7 +90,7 @@ func newUser_page(w_page http.ResponseWriter, r *http.Request) {
 	defer check_user_in_tbl.Close()
 
 	if check_email == "" {
-		_user.newUser()
+		_user.newUser(db)
 	} else {
 		_user.Email = "ERROR_USER_ALREADY_EXISTS"
 	}
