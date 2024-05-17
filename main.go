@@ -26,7 +26,23 @@ type TUser struct {
 	Email    string
 }
 
+type Joke struct {
+	Who       string
+	Punchline string
+}
+
 func main() {
+
+	db1, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, ""))
+	if err != nil {
+		panic(err.Error())
+	}
+
+	_, err = db1.Exec("CREATE DATABASE  IF NOT EXISTS " + dbname)
+	if err != nil {
+		panic(err)
+	}
+	db1.Close()
 
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbname))
 	if err != nil {
@@ -54,12 +70,18 @@ func index(w_page http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("templates/index.html",
 		"templates/header.html",
 		"templates/footer.html",
+		"templates/blog.html",
 		"templates/signup.html",
 		"templates/signup_success.html")
 	if err != nil {
 		panic(err)
 	}
 	tmpl.ExecuteTemplate(w_page, "index", curUser)
+
+	var blogText = "post1"
+
+	tmpl.ExecuteTemplate(w_page, "blog", blogText)
+
 }
 
 func (this TUser) newUser(db *sql.DB) {
