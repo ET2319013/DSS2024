@@ -17,6 +17,8 @@ var dbHost string = "localhost"
 var dbPort string = "3306"
 var dbname string = "golangdb"
 
+var curUser string = ""
+
 //var db *sql.DB
 
 type TUser struct {
@@ -57,7 +59,7 @@ func index(w_page http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	tmpl.ExecuteTemplate(w_page, "index", nil)
+	tmpl.ExecuteTemplate(w_page, "index", curUser)
 }
 
 func (this TUser) newUser(db *sql.DB) {
@@ -89,6 +91,7 @@ func newUser_page(w_page http.ResponseWriter, r *http.Request) {
 	}
 	defer check_user_in_tbl.Close()
 
+	curUser = _user.Email
 	if check_email == "" {
 		_user.newUser(db)
 	} else {
