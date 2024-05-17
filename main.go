@@ -89,10 +89,21 @@ func index(w_page http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.ExecuteTemplate(w_page, "index", curUser)
 
-	var blogText = "post1"
-
-	tmpl.ExecuteTemplate(w_page, "blog", blogText)
-
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbname))
+	if err != nil {
+		panic(err.Error())
+	}
+	var query = fmt.Sprintf("SELECT post FROM tbl_posts WHERE email = '" + curUser + "'")
+	check_post_in_tbl, err := db.Query(query)
+	if err != nil {
+		panic(err)
+	}
+	var blogText string
+	for check_post_in_tbl.Next() {
+		check_post_in_tbl.Scan(&blogText)
+		tmpl.ExecuteTemplate(w_page, "blog", blogText)
+	}
+	defer check_post_in_tbl.Close()
 }
 
 func (this TUser) newUser(db *sql.DB) {
@@ -124,7 +135,8 @@ func newPost(w_page http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err.Error())
 	}
-	insert, err := db.Query(fmt.Sprintf("INSERT INTO tbl_posts (email, title, post) VALUES ('%s', '%s', '%s')", _post.Email, _post.Title, _post.Content))
+	var query = fmt.Sprintf("INSERT INTO tbl_posts (email, title, post) VALUES ('%s', \"%s\", \"%s\")", _post.Email, _post.Title, _post.Content)
+	insert, err := db.Query(query)
 	if err != nil {
 		panic(err)
 	}
@@ -140,6 +152,18 @@ func newPost(w_page http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	tmpl.ExecuteTemplate(w_page, "index", curUser)
+
+	query = fmt.Sprintf("SELECT post FROM tbl_posts WHERE email = '" + curUser + "'")
+	check_post_in_tbl, err := db.Query(query)
+	if err != nil {
+		panic(err)
+	}
+	var blogText string
+	for check_post_in_tbl.Next() {
+		check_post_in_tbl.Scan(&blogText)
+		tmpl.ExecuteTemplate(w_page, "blog", blogText)
+	}
+	defer check_post_in_tbl.Close()
 }
 
 func newUser_page(w_page http.ResponseWriter, r *http.Request) {
