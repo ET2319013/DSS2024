@@ -69,6 +69,7 @@ func main() {
 func handleRequest() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/signup/", signUp_page)
+	http.HandleFunc("/logout/", index_logged_out)
 	http.HandleFunc("/create_user/", newUser_page)
 	http.HandleFunc("/post/", newPost_page)
 	http.HandleFunc("/create_post/", newPost)
@@ -106,9 +107,15 @@ func index(w_page http.ResponseWriter, r *http.Request) {
 	defer check_post_in_tbl.Close()
 }
 
-func (this TUser) newUser(db *sql.DB) {
+func index_logged_out(w_page http.ResponseWriter, r *http.Request) {
 
-	insert, err := db.Query(fmt.Sprintf("INSERT INTO tbl_user (email, password) VALUES ('%s', '%s')", this.Email, this.Password))
+	curUser = ""
+	index(w_page, r)
+}
+
+func (usr TUser) newUser(db *sql.DB) {
+
+	insert, err := db.Query(fmt.Sprintf("INSERT INTO tbl_user (email, password) VALUES ('%s', '%s')", usr.Email, usr.Password))
 	if err != nil {
 		panic(err)
 	}
@@ -175,22 +182,28 @@ func newUser_page(w_page http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err.Error())
 	}
-	var query = fmt.Sprintf("SELECT * FROM tbl_user WHERE email = '" + _user.Email + "'")
+	var query = fmt.Sprintf("SELECT email, password FROM tbl_user WHERE email = '" + _user.Email + "'")
 	check_user_in_tbl, err := db.Query(query)
 	if err != nil {
 		panic(err)
 	}
 	var check_email string
+	var check_password string
 	for check_user_in_tbl.Next() {
-		check_user_in_tbl.Scan(&check_email)
+		check_user_in_tbl.Scan(&check_email, &check_password)
 	}
 	defer check_user_in_tbl.Close()
 
-	curUser = _user.Email
 	if check_email == "" {
+		curUser = _user.Email
 		_user.newUser(db)
 	} else {
-		_user.Email = "ERROR_USER_ALREADY_EXISTS"
+
+		if check_password != _user.Password {
+			_user.Email = "ERROR_WRONG_PASSWORD"
+		} else {
+			curUser = _user.Email
+		}
 	}
 
 	tmpl, err := template.ParseFiles("templates/index.html",
