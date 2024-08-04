@@ -20,6 +20,7 @@ var dbname string = "golangdb"
 var curUser string = ""
 var curID int = -1
 
+//TODO: post comments
 //var db *sql.DB
 
 type TUser struct {
