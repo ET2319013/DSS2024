@@ -1,0 +1,1 @@
+create table IF NOT EXISTS tbl_user (id INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(50), password VARCHAR(50));

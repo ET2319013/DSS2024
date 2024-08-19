@@ -8,6 +8,9 @@ import (
 	_ "reflect"
 
 	_ "github.com/go-sql-driver/mysql"
+	// _ "github.com/golang-migrate/migrate/v4"
+	// I'd like to use this library https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md,
+	// but failed
 )
 
 // MYSQL CREDS
@@ -65,6 +68,10 @@ func main() {
 	fmt.Println(stmt1)
 
 	handleRequest()
+}
+
+func init() {
+
 }
 
 func handleRequest() {

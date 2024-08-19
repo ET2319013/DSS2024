@@ -1,0 +1,1 @@
+create table IF NOT EXISTS tbl_posts (id INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(50), title VARCHAR(50), post VARCHAR(1024));
