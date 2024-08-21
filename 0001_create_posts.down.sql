@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS tbl_posts;
+DROP TABLE IF EXISTS tbl_posts

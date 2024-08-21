@@ -21,7 +21,8 @@ var dbPort string = "3306"
 var dbname string = "golangdb"
 
 var curUser string = ""
-var curID int = -1
+
+//var curID int = -1
 
 //TODO: post comments
 //var db *sql.DB
@@ -39,39 +40,15 @@ type TPost struct {
 
 func main() {
 
-	db1, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, ""))
-	if err != nil {
-		panic(err.Error())
-	}
+	db := InitDB(dbUser, dbPass, dbHost, dbPort, dbname) //Connect driver, Open or Create DB
 
-	_, err = db1.Exec("CREATE DATABASE  IF NOT EXISTS " + dbname)
-	if err != nil {
-		panic(err)
-	}
-	db1.Close()
-
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbname))
-	if err != nil {
-		panic(err.Error())
-	}
-
-	stmt, err := db.Exec("CREATE TABLE IF NOT EXISTS tbl_user (id INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(50), password VARCHAR(50))")
-	if err != nil {
-		panic(err.Error())
-	}
+	stmt := ExecuteFile(db, "0001_create_users.up.sql")
 	fmt.Println(stmt)
 
-	stmt1, err := db.Exec("CREATE TABLE IF NOT EXISTS tbl_posts (id INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(50), title VARCHAR(50), post VARCHAR(1024))")
-	if err != nil {
-		panic(err.Error())
-	}
+	stmt1 := ExecuteFile(db, "0001_create_posts.up.sql")
 	fmt.Println(stmt1)
 
 	handleRequest()
-}
-
-func init() {
-
 }
 
 func handleRequest() {
@@ -98,10 +75,8 @@ func index(w_page http.ResponseWriter, r *http.Request) {
 	}
 	tmpl.ExecuteTemplate(w_page, "index", curUser)
 
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbname))
-	if err != nil {
-		panic(err.Error())
-	}
+	db := OpenSQL(dbUser, dbPass, dbHost, dbPort, dbname)
+
 	var query = fmt.Sprintf("SELECT post FROM tbl_posts WHERE email = '" + curUser + "'")
 	check_post_in_tbl, err := db.Query(query)
 	if err != nil {
@@ -146,10 +121,7 @@ func newPost(w_page http.ResponseWriter, r *http.Request) {
 	_post.Email = curUser
 	_post.Title = r.FormValue("inputTitle")
 	_post.Content = r.FormValue("inputContent")
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbname))
-	if err != nil {
-		panic(err.Error())
-	}
+	db := OpenSQL(dbUser, dbPass, dbHost, dbPort, dbname)
 	var query = fmt.Sprintf("INSERT INTO tbl_posts (email, title, post) VALUES ('%s', \"%s\", \"%s\")", _post.Email, _post.Title, _post.Content)
 	insert, err := db.Query(query)
 	if err != nil {
@@ -186,10 +158,7 @@ func newUser_page(w_page http.ResponseWriter, r *http.Request) {
 	_user.Email = r.FormValue("inputEmail")
 	_user.Password = r.FormValue("inputPassword")
 
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbname))
-	if err != nil {
-		panic(err.Error())
-	}
+	db := OpenSQL(dbUser, dbPass, dbHost, dbPort, dbname)
 	var query = fmt.Sprintf("SELECT email, password FROM tbl_user WHERE email = '" + _user.Email + "'")
 	check_user_in_tbl, err := db.Query(query)
 	if err != nil {
