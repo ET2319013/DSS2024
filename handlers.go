@@ -7,13 +7,15 @@ import (
 	"net/http"
 	_ "reflect"
 
+	"golang.org/x/crypto/bcrypt"
+
 	_ "github.com/go-sql-driver/mysql"
 	// _ "github.com/golang-migrate/migrate/v4"
 	// I'd like to use this library https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md,
 	// but failed
 )
 
-func index(w_page http.ResponseWriter, r *http.Request) {
+func index(wPage http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("templates/index.html",
 		"templates/header.html",
 		"templates/footer.html",
@@ -24,27 +26,27 @@ func index(w_page http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	tmpl.ExecuteTemplate(w_page, "index", curUser)
+	tmpl.ExecuteTemplate(wPage, "index", curUser)
 
 	db := OpenSQL(dbUser, dbPass, dbHost, dbPort, dbname)
 
 	var query = fmt.Sprintf("SELECT post FROM tbl_posts WHERE email = '" + curUser + "'")
-	check_post_in_tbl, err := db.Query(query)
+	checkPostInTable, err := db.Query(query)
 	if err != nil {
 		panic(err)
 	}
 	var blogText string
-	for check_post_in_tbl.Next() {
-		check_post_in_tbl.Scan(&blogText)
-		tmpl.ExecuteTemplate(w_page, "blog", blogText)
+	for checkPostInTable.Next() {
+		checkPostInTable.Scan(&blogText)
+		tmpl.ExecuteTemplate(wPage, "blog", blogText)
 	}
-	defer check_post_in_tbl.Close()
+	defer checkPostInTable.Close()
 }
 
-func index_logged_out(w_page http.ResponseWriter, r *http.Request) {
+func indexLoggedOut(wPage http.ResponseWriter, r *http.Request) {
 
 	curUser = ""
-	index(w_page, r)
+	index(wPage, r)
 }
 
 func (usr TUser) newUser(db *sql.DB) {
@@ -56,7 +58,7 @@ func (usr TUser) newUser(db *sql.DB) {
 	defer insert.Close()
 }
 
-func newPost_page(w_page http.ResponseWriter, r *http.Request) {
+func newPostPage(wPage http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("templates/index.html",
 		"templates/header.html",
 		"templates/footer.html",
@@ -64,10 +66,10 @@ func newPost_page(w_page http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	tmpl.ExecuteTemplate(w_page, "post", nil)
+	tmpl.ExecuteTemplate(wPage, "post", nil)
 }
 
-func newPost(w_page http.ResponseWriter, r *http.Request) {
+func newPost(wPage http.ResponseWriter, r *http.Request) {
 	var _post TPost
 	_post.Email = curUser
 	_post.Title = r.FormValue("inputTitle")
@@ -89,45 +91,52 @@ func newPost(w_page http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	tmpl.ExecuteTemplate(w_page, "index", curUser)
+	tmpl.ExecuteTemplate(wPage, "index", curUser)
 
 	query = fmt.Sprintf("SELECT post FROM tbl_posts WHERE email = '" + curUser + "'")
-	check_post_in_tbl, err := db.Query(query)
+	checkPostInTable, err := db.Query(query)
 	if err != nil {
 		panic(err)
 	}
 	var blogText string
-	for check_post_in_tbl.Next() {
-		check_post_in_tbl.Scan(&blogText)
-		tmpl.ExecuteTemplate(w_page, "blog", blogText)
+	for checkPostInTable.Next() {
+		checkPostInTable.Scan(&blogText)
+		tmpl.ExecuteTemplate(wPage, "blog", blogText)
 	}
-	defer check_post_in_tbl.Close()
+	defer checkPostInTable.Close()
 }
 
-func newUser_page(w_page http.ResponseWriter, r *http.Request) {
+func newUserPage(wPage http.ResponseWriter, r *http.Request) {
 	var _user TUser
 	_user.Email = r.FormValue("inputEmail")
-	_user.Password = r.FormValue("inputPassword")
-
-	db := OpenSQL(dbUser, dbPass, dbHost, dbPort, dbname)
-	var query = fmt.Sprintf("SELECT email, password FROM tbl_user WHERE email = '" + _user.Email + "'")
-	check_user_in_tbl, err := db.Query(query)
+	password := []byte(r.FormValue("inputPassword"))
+	// Hashing the password with the default cost of 10
+	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
 	if err != nil {
 		panic(err)
 	}
-	var check_email string
-	var check_password string
-	for check_user_in_tbl.Next() {
-		check_user_in_tbl.Scan(&check_email, &check_password)
-	}
-	defer check_user_in_tbl.Close()
+	_user.Password = string(hashedPassword)
 
-	if check_email == "" {
+	db := OpenSQL(dbUser, dbPass, dbHost, dbPort, dbname)
+	var query = fmt.Sprintf("SELECT email, password FROM tbl_user WHERE email = '" + _user.Email + "'")
+	checkUserInTable, err := db.Query(query)
+	if err != nil {
+		panic(err)
+	}
+	var checkEmail string
+	var checkPassword string
+	for checkUserInTable.Next() {
+		checkUserInTable.Scan(&checkEmail, &checkPassword)
+	}
+	defer checkUserInTable.Close()
+
+	if checkEmail == "" {
 		curUser = _user.Email
 		_user.newUser(db)
 	} else {
+		err = bcrypt.CompareHashAndPassword(hashedPassword, password)
 
-		if check_password != _user.Password {
+		if err != nil {
 			_user.Email = "ERROR_WRONG_PASSWORD"
 		} else {
 			curUser = _user.Email
@@ -144,10 +153,10 @@ func newUser_page(w_page http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	tmpl.ExecuteTemplate(w_page, "signup_success", _user)
+	tmpl.ExecuteTemplate(wPage, "signup_success", _user)
 }
 
-func signUp_page(w_page http.ResponseWriter, r *http.Request) {
+func signUpPage(wPage http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("templates/index.html",
 		"templates/header.html",
 		"templates/footer.html",
@@ -155,5 +164,5 @@ func signUp_page(w_page http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	tmpl.ExecuteTemplate(w_page, "signup", nil)
+	tmpl.ExecuteTemplate(wPage, "signup", nil)
 }

@@ -51,10 +51,10 @@ func main() {
 
 func handleRequest() {
 	http.HandleFunc("/", index)
-	http.HandleFunc("/signup/", signUp_page)
-	http.HandleFunc("/logout/", index_logged_out)
-	http.HandleFunc("/create_user/", newUser_page)
-	http.HandleFunc("/post/", newPost_page)
+	http.HandleFunc("/signup/", signUpPage)
+	http.HandleFunc("/logout/", indexLoggedOut)
+	http.HandleFunc("/create_user/", newUserPage)
+	http.HandleFunc("/post/", newPostPage)
 	http.HandleFunc("/create_post/", newPost)
 
 	http.ListenAndServe(":8080", nil)
